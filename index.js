@@ -2,44 +2,51 @@ var rework = require('rework');
 var path = require('path');
 var through = require('through2');
 var validator = require('validator');
+var extend = require('extend');
 
-var isAbsolute = function(p) {
-    var normal = path.normalize(p);
-    var absolute = path.resolve(p);
-    return normal == absolute;
+var isAbsolute = function(url) {
+    return path.resolve(url) === path.normalize(url);
+};
+
+var isWindows = function() {
+    return process.platform === 'win32';
 };
 
 var rebaseUrls = function(css, options) {
     return rework(css)
         .use(rework.url(function(url){
-            if (isAbsolute(url) && validator.isURL(url)) {
-                return url;
-            }
-            var absolutePath = path.join(options.currentDir, url)
-            var p = path.relative(options.root, absolutePath);
 
-            if (process.platform === 'win32') {
-                p = p.replace(/\\/g, '/');
+            // only rewrite relative paths
+            if (!isAbsolute(url) && !validator.isURL(url)) {
+                url = path.join(options.cwd, url);
+                url = path.relative(options.root, url);
+                url = path.join(options.prepend, url);
+                if (isWindows()) {
+                    url = url.replace(/\\/g, '/');
+                }
             }
 
-            return p;
+            return url;
         }))
         .toString();
 };
 
 module.exports = function(options) {
-    options = options || {};
-    var root = options.root || '.';
+    options = extend({
+        root: '.',
+        prepend: ''
+    }, options);
 
-    return through.obj(function(file, enc, cb) {
+    return through.obj(function(file, enc, callback) {
         var css = rebaseUrls(file.contents.toString(), {
-            currentDir: path.dirname(file.path),
-            root: path.join(file.cwd, root)
+            cwd: path.dirname(file.path),
+            root: path.join(file.cwd, options.root),
+            prepend: options.prepend
         });
 
         file.contents = new Buffer(css);
 
         this.push(file);
-        cb();
+        callback();
     });
 };

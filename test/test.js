@@ -27,7 +27,6 @@ it('when root is not specified', function(cb) {
     stream.end();
 });
 
-
 it('when root is specified', function(cb) {
     var stream = cssRebaseUrls({ root: './css' });
 
@@ -45,3 +44,19 @@ it('when root is specified', function(cb) {
     stream.end();
 });
 
+it('when prepend is specified', function(cb) {
+    var stream = cssRebaseUrls({ prepend: './assets' });
+
+    stream.on('data', function(file) {
+        assert.equal(file.contents.toString('utf8'), read('3-expected.css').toString('utf-8'));
+        cb();
+    });
+
+    stream.write(new gutil.File({
+        base: testPath,
+        path: testPath + '/style.css',
+        contents: read('3-test.css')
+    }));
+
+    stream.end();
+});
