@@ -6,10 +6,10 @@
   "dependencies": {
     "rework": "~0.20.2",
     "validator": "~3.1.0",
-    "through2": "~0.4.0"
+    "through2": "~0.4.0",
+    "extend": "^2.0.0"
   },
   "devDependencies": {
-    "extend": "^2.0.0",
     "gulp-util": "~2.2.13",
     "mocha": "~1.17.0"
   },
